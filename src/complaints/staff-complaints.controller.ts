@@ -1,0 +1,31 @@
+import { Controller, Get, Patch, Query, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { StaffComplaintsService } from './staff-complaints.service';
+import { ComplaintsPaginationDto } from './dto/complaints-pagination.dto';
+import { StaffAuthGuard } from '../common/guards/staff-auth.guard';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+@ApiTags('Staff - Complaints')
+@ApiBearerAuth()
+@UseGuards(StaffAuthGuard, PermissionsGuard)
+@Controller('staff/complaints')
+export class StaffComplaintsController {
+  constructor(private readonly staffComplaintsService: StaffComplaintsService) {}
+
+  @Get()
+  findAll(@Query() paginationDto: ComplaintsPaginationDto, @Request() req: any) {
+    return this.staffComplaintsService.findAllForStaff(req.user.staff_id, paginationDto);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.staffComplaintsService.findOneForStaff(req.user.staff_id, +id);
+  }
+
+  @Patch(':id/assign')
+  @RequirePermissions('ASSIGN_LINEMAN')
+  assignLineman(@Param('id') id: string, @Body('lineman_id') lineman_id: number, @Request() req: any) {
+    return this.staffComplaintsService.assignLineman(req.user.staff_id, +id, lineman_id);
+  }
+}
