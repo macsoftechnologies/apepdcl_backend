@@ -25,28 +25,32 @@ export class StaffLinemenController {
   @RequirePermissions('ASSIGN_LINEMAN')
   async getAvailableLinemen(@Request() req: any) {
     const staffId = req.user.staff_id;
+    const isSuperAdmin = req.user.is_super_admin;
     
-    // Simplification: In a real app we would traverse the geography tree correctly
-    // for Circle/Division/SubDivision to find all Sections under them.
-    // Assuming for this endpoint the AE has Section jurisdictions directly, 
-    // or we fetch all linemen and filter. Let's do a basic fetch of linemen 
-    // that belong to the sections this staff oversees.
-    
-    const jurisdictions = await this.jurisdictionRepo.find({
-      where: { staff_id: staffId, jurisdiction_level: JurisdictionLevel.SECTION },
-    });
+    let linemen;
 
-    const sectionIds = jurisdictions.map(j => j.jurisdiction_id);
+    if (isSuperAdmin) {
+      linemen = await this.linemanRepo
+        .createQueryBuilder('lineman')
+        .leftJoinAndSelect('lineman.staff', 'staff')
+        .getMany();
+    } else {
+      const jurisdictions = await this.jurisdictionRepo.find({
+        where: { staff_id: staffId, jurisdiction_level: JurisdictionLevel.SECTION },
+      });
 
-    if (sectionIds.length === 0) {
-      return [];
+      const sectionIds = jurisdictions.map(j => j.jurisdiction_id);
+
+      if (sectionIds.length === 0) {
+        return [];
+      }
+
+      linemen = await this.linemanRepo
+        .createQueryBuilder('lineman')
+        .leftJoinAndSelect('lineman.staff', 'staff')
+        .where('lineman.section_id IN (:...sectionIds)', { sectionIds })
+        .getMany();
     }
-
-    const linemen = await this.linemanRepo
-      .createQueryBuilder('lineman')
-      .leftJoinAndSelect('lineman.staff', 'staff')
-      .where('lineman.section_id IN (:...sectionIds)', { sectionIds })
-      .getMany();
 
     return linemen.map(l => ({
       lineman_id: l.lineman_id,

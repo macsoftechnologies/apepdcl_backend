@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { StaffService, StaffPaginationDto } from './staff.service';
 import { CreateStaffDto, UpdateStaffDto } from './dto/create-staff.dto';
@@ -33,43 +34,43 @@ export class StaffController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.staffService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.staffService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDto: UpdateStaffDto) {
-    return this.staffService.update(+id, updateDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateDto: UpdateStaffDto) {
+    return this.staffService.update(id, updateDto);
   }
 
   @Patch(':id/toggle-status')
-  toggleActive(@Param('id') id: string) {
-    return this.staffService.toggleActive(+id);
+  toggleActive(@Param('id', ParseIntPipe) id: number) {
+    return this.staffService.toggleActive(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.staffService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.staffService.remove(id);
   }
 
   @Patch(':id/reset-password')
   resetPassword(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body('password') password: string,
   ) {
-    return this.staffService.resetPassword(+id, password);
+    return this.staffService.resetPassword(id, password);
   }
 
   @Get(':id/permissions')
-  getPermissions(@Param('id') id: string) {
-    return this.staffService.getPermissions(+id);
+  getPermissions(@Param('id', ParseIntPipe) id: number) {
+    return this.staffService.getPermissions(id);
   }
 
   @Patch(':id/permissions')
   updatePermissions(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body('permissions') permissions: string[],
   ) {
-    return this.staffService.updatePermissions(+id, permissions);
+    return this.staffService.updatePermissions(id, permissions);
   }
 }
