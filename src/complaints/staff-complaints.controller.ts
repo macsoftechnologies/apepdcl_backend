@@ -15,17 +15,17 @@ export class StaffComplaintsController {
 
   @Get()
   findAll(@Query() paginationDto: ComplaintsPaginationDto, @Request() req: any) {
-    return this.staffComplaintsService.findAllForStaff(req.user.staff_id, req.user.is_super_admin, paginationDto);
+    return this.staffComplaintsService.findAllForStaff(req.user.staff_id, req.user.is_super_admin, req.user.role_level, paginationDto);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.staffComplaintsService.findOneForStaff(req.user.staff_id, req.user.is_super_admin, id);
+    return this.staffComplaintsService.findOneForStaff(req.user.staff_id, req.user.is_super_admin, req.user.role_level, id);
   }
 
   @Patch(':id/assign')
   @RequirePermissions('ASSIGN_LINEMAN')
   assignLineman(@Param('id', ParseIntPipe) id: number, @Body('lineman_id') lineman_id: number, @Request() req: any) {
-    return this.staffComplaintsService.assignLineman(req.user.staff_id, req.user.is_super_admin, id, lineman_id);
+    return this.staffComplaintsService.assignLineman(req.user.staff_id, req.user.is_super_admin, req.user.role_level, id, lineman_id);
   }
 }

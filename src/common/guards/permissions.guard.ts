@@ -28,7 +28,7 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User is not authenticated as staff');
     }
 
-    if (user.is_super_admin) {
+    if (user.is_super_admin || user.role_level === 6) {
       return true;
     }
 
