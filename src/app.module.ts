@@ -10,6 +10,9 @@ import { ComplaintsModule } from './complaints/complaints.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { SeederService } from './config/seeder.service';
 import { Designation } from './staff/entities/designation.entity';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SettingsModule } from './config/settings.module';
+import { EscalationModule } from './escalation/escalation.module';
 import { StaffUser } from './staff/entities/staff-user.entity';
 import { Permission } from './staff/entities/permission.entity';
 import { ConsumerModule } from './consumer/consumer.module';
@@ -30,11 +33,14 @@ import { join } from 'path';
     AuthModule,
     GeographyModule,
     ComplaintsModule,
+    NotificationsModule,
+    SettingsModule,
     StaffModule,
     DashboardModule,
     ConsumerModule,
     LinemanModule,
     UploadModule,
+    EscalationModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',

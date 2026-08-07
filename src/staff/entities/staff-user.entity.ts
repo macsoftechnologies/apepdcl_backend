@@ -13,6 +13,7 @@ import {
 import { Designation } from './designation.entity';
 import { StaffJurisdiction } from './staff-jurisdiction.entity';
 import { LinemanDetails } from './lineman-details.entity';
+import { StaffPermission } from './staff-permission.entity';
 
 @Entity('staff_users')
 export class StaffUser {
@@ -52,6 +53,9 @@ export class StaffUser {
 
   @OneToMany(() => StaffJurisdiction, (j) => j.staff)
   jurisdictions: StaffJurisdiction[];
+
+  @OneToMany(() => StaffPermission, (p) => p.staff)
+  permissions: StaffPermission[];
 
   @OneToOne(() => LinemanDetails, (l) => l.staff, { cascade: true })
   lineman_details: LinemanDetails;

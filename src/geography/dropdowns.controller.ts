@@ -14,4 +14,14 @@ export class DropdownsController {
   getDropdowns(@Query() query: any) {
     return this.dropdownsService.getDropdowns(query);
   }
+
+  @Get('tree')
+  getGeographyTree(@Query('level') level: string, @Query('id') id: string) {
+    return this.dropdownsService.getGeographyTree(level, Number(id));
+  }
+
+  @Get('node-details')
+  getNodeDetails(@Query('level') level: string, @Query('id') id: string) {
+    return this.dropdownsService.getNodeDetails(level, Number(id));
+  }
 }

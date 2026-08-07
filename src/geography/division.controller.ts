@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseIntPipe
 } from '@nestjs/common';
 import { DivisionService } from './division.service';
 import { DivisionPaginationDto } from './dto/division-pagination.dto';
@@ -34,20 +35,20 @@ export class DivisionController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.divisionService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.divisionService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: Partial<CreateDivisionDto>,
   ) {
-    return this.divisionService.update(+id, updateDto);
+    return this.divisionService.update(id, updateDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.divisionService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.divisionService.remove(id);
   }
 }

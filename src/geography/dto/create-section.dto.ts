@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsInt,
   IsNumber,
+  Length,
 } from 'class-validator';
 
 export class CreateSectionDto {
@@ -26,10 +27,12 @@ export class CreateSectionDto {
 
   @IsString()
   @IsOptional()
+  @Length(16, 16, { message: 'Service number must be exactly 16 digits' })
   service_number_from?: string;
 
   @IsString()
   @IsOptional()
+  @Length(16, 16, { message: 'Service number must be exactly 16 digits' })
   service_number_to?: string;
 
   @IsNumber()

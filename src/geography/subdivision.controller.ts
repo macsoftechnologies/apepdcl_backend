@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseIntPipe
 } from '@nestjs/common';
 import { SubdivisionService } from './subdivision.service';
 import { SubdivisionPaginationDto } from './dto/subdivision-pagination.dto';
@@ -34,20 +35,20 @@ export class SubdivisionController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subdivService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.subdivService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: Partial<CreateSubdivisionDto>,
   ) {
-    return this.subdivService.update(+id, updateDto);
+    return this.subdivService.update(id, updateDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.subdivService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.subdivService.remove(id);
   }
 }

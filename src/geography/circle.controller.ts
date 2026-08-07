@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseIntPipe
 } from '@nestjs/common';
 import { CircleService } from './circle.service';
 import { CreateCircleDto } from './dto/create-circle.dto';
@@ -34,20 +35,20 @@ export class CircleController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.circleService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.circleService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateCircleDto: Partial<CreateCircleDto>,
   ) {
-    return this.circleService.update(+id, updateCircleDto);
+    return this.circleService.update(id, updateCircleDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.circleService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.circleService.remove(id);
   }
 }

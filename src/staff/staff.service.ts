@@ -146,7 +146,7 @@ export class StaffService {
       where,
       skip,
       take: limit,
-      relations: { designation: true, jurisdictions: true },
+      relations: { designation: true, jurisdictions: true, permissions: true },
       order: { created_at: 'DESC' },
     });
 

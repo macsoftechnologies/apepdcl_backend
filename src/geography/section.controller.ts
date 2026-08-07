@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   UseGuards,
+  ParseIntPipe
 } from '@nestjs/common';
 import { SectionService } from './section.service';
 import { SectionPaginationDto } from './dto/section-pagination.dto';
@@ -34,20 +35,20 @@ export class SectionController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.sectionService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.sectionService.findOne(id);
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: Partial<CreateSectionDto>,
   ) {
-    return this.sectionService.update(+id, updateDto);
+    return this.sectionService.update(id, updateDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.sectionService.remove(+id);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.sectionService.remove(id);
   }
 }

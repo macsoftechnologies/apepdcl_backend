@@ -82,11 +82,11 @@ export class Complaint {
   })
   status: ComplaintStatus;
 
-  @Column({ nullable: true })
-  assigned_lineman_id: number; // Phase 2
+  @Column({ type: 'int', nullable: true })
+  assigned_lineman_id: number | null; // Phase 2
 
-  @Column({ nullable: true })
-  assigned_by: number; // Phase 2
+  @Column({ type: 'int', nullable: true })
+  assigned_by: number | null; // Phase 2
 
   @CreateDateColumn()
   created_at: Date;
@@ -94,8 +94,8 @@ export class Complaint {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @Column({ nullable: true })
-  assigned_at: Date;
+  @Column({ type: 'datetime', nullable: true })
+  assigned_at: Date | null;
 
   @Column({ nullable: true })
   working_at: Date;
