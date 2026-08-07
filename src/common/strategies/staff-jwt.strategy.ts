@@ -22,6 +22,7 @@ export class StaffJwtStrategy extends PassportStrategy(Strategy, 'staff-jwt') {
       email: payload.email,
       phone_number: payload.phone_number,
       role_level: payload.role_level,
+      is_super_admin: payload.is_super_admin,
       lineman_id: payload.lineman_id,
       section_id: payload.section_id,
     };

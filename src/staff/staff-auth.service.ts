@@ -73,6 +73,7 @@ export class StaffAuthService {
       phone_number: user.phone_number,
       is_staff: true,
       role_level: user.designation?.role_level,
+      is_super_admin: user.is_super_admin,
     };
 
     const linemanDetails = await this.linemanRepo.findOne({
@@ -93,6 +94,7 @@ export class StaffAuthService {
         email: user.email,
         designation: user.designation?.title,
         role_level: user.designation?.role_level,
+        is_super_admin: user.is_super_admin,
         jurisdictions: user.jurisdictions,
         lineman_id: linemanDetails?.lineman_id,
         section_id: linemanDetails?.section_id,
