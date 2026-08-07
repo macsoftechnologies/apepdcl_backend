@@ -28,6 +28,10 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User is not authenticated as staff');
     }
 
+    if (user.is_super_admin) {
+      return true;
+    }
+
     const userPermissions = await this.staffPermRepo.find({
       where: { staff_id: user.staff_id },
     });
