@@ -14,7 +14,7 @@ export class StaffComplaintsService {
     private readonly jurisdictionRepo: Repository<StaffJurisdiction>,
   ) {}
 
-  async findAllForStaff(staffId: number, paginationDto: ComplaintsPaginationDto) {
+  async findAllForStaff(staffId: number, isSuperAdmin: boolean, paginationDto: ComplaintsPaginationDto) {
     const {
       page = 1,
       limit = 10,
@@ -44,22 +44,24 @@ export class StaffComplaintsService {
       .leftJoinAndSelect('division.circle', 'circle');
 
     // Apply Jurisdiction Scoping
-    if (jurisdictions.length === 0) {
-      // If no jurisdictions, return empty
-      query.andWhere('1 = 0');
-    } else {
-      query.andWhere(
-        new Brackets((qb) => {
-          jurisdictions.forEach((j, index) => {
-            const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
-            if (index === 0) {
-              qb.where(condition.sql, condition.params);
-            } else {
-              qb.orWhere(condition.sql, condition.params);
-            }
-          });
-        }),
-      );
+    if (!isSuperAdmin) {
+      if (jurisdictions.length === 0) {
+        // If no jurisdictions, return empty
+        query.andWhere('1 = 0');
+      } else {
+        query.andWhere(
+          new Brackets((qb) => {
+            jurisdictions.forEach((j, index) => {
+              const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
+              if (index === 0) {
+                qb.where(condition.sql, condition.params);
+              } else {
+                qb.orWhere(condition.sql, condition.params);
+              }
+            });
+          }),
+        );
+      }
     }
 
     if (status) {
@@ -110,7 +112,7 @@ export class StaffComplaintsService {
     };
   }
 
-  async findOneForStaff(staffId: number, id: number) {
+  async findOneForStaff(staffId: number, isSuperAdmin: boolean, id: number) {
     const jurisdictions = await this.jurisdictionRepo.find({
       where: { staff_id: staffId },
     });
@@ -124,22 +126,24 @@ export class StaffComplaintsService {
       .leftJoinAndSelect('division.circle', 'circle')
       .where('complaint.complaint_id = :id', { id });
 
-    if (jurisdictions.length === 0) {
-      throw new NotFoundException(`Complaint with ID ${id} not found in your jurisdiction`);
-    }
+    if (!isSuperAdmin) {
+      if (jurisdictions.length === 0) {
+        throw new NotFoundException(`Complaint with ID ${id} not found in your jurisdiction`);
+      }
 
-    query.andWhere(
-      new Brackets((qb) => {
-        jurisdictions.forEach((j, index) => {
-          const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
-          if (index === 0) {
-            qb.where(condition.sql, condition.params);
-          } else {
-            qb.orWhere(condition.sql, condition.params);
-          }
-        });
-      }),
-    );
+      query.andWhere(
+        new Brackets((qb) => {
+          jurisdictions.forEach((j, index) => {
+            const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
+            if (index === 0) {
+              qb.where(condition.sql, condition.params);
+            } else {
+              qb.orWhere(condition.sql, condition.params);
+            }
+          });
+        }),
+      );
+    }
 
     const complaint = await query.getOne();
     if (!complaint) {
@@ -149,8 +153,8 @@ export class StaffComplaintsService {
     return complaint;
   }
 
-  async assignLineman(staffId: number, complaintId: number, linemanId: number) {
-    const complaint = await this.findOneForStaff(staffId, complaintId);
+  async assignLineman(staffId: number, isSuperAdmin: boolean, complaintId: number, linemanId: number) {
+    const complaint = await this.findOneForStaff(staffId, isSuperAdmin, complaintId);
     
     complaint.assigned_lineman_id = linemanId;
     complaint.assigned_by = staffId;

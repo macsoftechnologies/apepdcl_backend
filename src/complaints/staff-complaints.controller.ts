@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Query, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Query, Param, Body, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
 import { StaffComplaintsService } from './staff-complaints.service';
 import { ComplaintsPaginationDto } from './dto/complaints-pagination.dto';
 import { StaffAuthGuard } from '../common/guards/staff-auth.guard';
@@ -15,17 +15,17 @@ export class StaffComplaintsController {
 
   @Get()
   findAll(@Query() paginationDto: ComplaintsPaginationDto, @Request() req: any) {
-    return this.staffComplaintsService.findAllForStaff(req.user.staff_id, paginationDto);
+    return this.staffComplaintsService.findAllForStaff(req.user.staff_id, req.user.is_super_admin, paginationDto);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req: any) {
-    return this.staffComplaintsService.findOneForStaff(req.user.staff_id, +id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.staffComplaintsService.findOneForStaff(req.user.staff_id, req.user.is_super_admin, id);
   }
 
   @Patch(':id/assign')
   @RequirePermissions('ASSIGN_LINEMAN')
-  assignLineman(@Param('id') id: string, @Body('lineman_id') lineman_id: number, @Request() req: any) {
-    return this.staffComplaintsService.assignLineman(req.user.staff_id, +id, lineman_id);
+  assignLineman(@Param('id', ParseIntPipe) id: number, @Body('lineman_id') lineman_id: number, @Request() req: any) {
+    return this.staffComplaintsService.assignLineman(req.user.staff_id, req.user.is_super_admin, id, lineman_id);
   }
 }
