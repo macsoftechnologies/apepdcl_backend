@@ -12,7 +12,7 @@ import { StaffJurisdiction, JurisdictionLevel } from './entities/staff-jurisdict
 @ApiTags('Staff - Linemen (AE/AEE Tools)')
 @ApiBearerAuth()
 @UseGuards(StaffAuthGuard, PermissionsGuard)
-@Controller('staff/linemen')
+@Controller('staff/linemen/available')
 export class StaffLinemenController {
   constructor(
     private readonly staffService: StaffService,
