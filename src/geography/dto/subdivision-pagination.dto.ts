@@ -7,4 +7,9 @@ export class SubdivisionPaginationDto extends PaginationDto {
   @IsInt()
   @IsOptional()
   division_id?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  circle_id?: number;
 }

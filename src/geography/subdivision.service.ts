@@ -20,7 +20,7 @@ export class SubdivisionService {
   }
 
   async findAll(paginationDto: SubdivisionPaginationDto) {
-    const { page = 1, limit = 10, search, division_id } = paginationDto;
+    const { page = 1, limit = 10, search, division_id, circle_id } = paginationDto;
     const skip = (page - 1) * limit;
 
     let where: any = { is_active: true };
@@ -33,9 +33,16 @@ export class SubdivisionService {
         where[0].division_id = division_id;
         where[1].division_id = division_id;
       }
+      if (circle_id) {
+        where[0].division = { circle_id };
+        where[1].division = { circle_id };
+      }
     } else {
       if (division_id) {
         where.division_id = division_id;
+      }
+      if (circle_id) {
+        where.division = { circle_id };
       }
     }
 
