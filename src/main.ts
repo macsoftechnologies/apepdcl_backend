@@ -27,8 +27,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:5173',
-      'https://launchpaad.tech/apepdclbackend',
-      'https://www.launchpaad.tech/apepdclbackend',
+      'https://launchpaad.tech',
+      'https://www.launchpaad.tech',
     ],
 
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
