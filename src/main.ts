@@ -25,13 +25,8 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'https://launchpaad.tech',
-      'https://www.launchpaad.tech',
-    ],
-
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    origin: true, // Allow all origins for now
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
