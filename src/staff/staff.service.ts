@@ -132,7 +132,7 @@ export class StaffService {
         LEFT JOIN staff_jurisdictions sj ON sj.staff_id = s.staff_id
         LEFT JOIN sections sec ON sj.jurisdiction_level = 'Section' AND sec.section_id = sj.jurisdiction_id
         LEFT JOIN subdivisions sub ON sec.subdivision_id = sub.subdivision_id
-        LEFT JOIN divisions div ON sub.division_id = div.division_id
+        LEFT JOIN divisions divs ON sub.division_id = divs.division_id
         WHERE d.title LIKE '%Lineman%'
       `;
       let countQueryStr = `
@@ -142,7 +142,7 @@ export class StaffService {
         LEFT JOIN staff_jurisdictions sj ON sj.staff_id = s.staff_id
         LEFT JOIN sections sec ON sj.jurisdiction_level = 'Section' AND sec.section_id = sj.jurisdiction_id
         LEFT JOIN subdivisions sub ON sec.subdivision_id = sub.subdivision_id
-        LEFT JOIN divisions div ON sub.division_id = div.division_id
+        LEFT JOIN divisions divs ON sub.division_id = divs.division_id
         WHERE d.title LIKE '%Lineman%'
       `;
       
@@ -158,7 +158,7 @@ export class StaffService {
       }
 
       if (circle_id) {
-        const circleClause = ` AND (div.circle_id = ? OR (sj.jurisdiction_level = 'Circle' AND sj.jurisdiction_id = ?))`;
+        const circleClause = ` AND (divs.circle_id = ? OR (sj.jurisdiction_level = 'Circle' AND sj.jurisdiction_id = ?))`;
         queryStr += circleClause;
         countQueryStr += circleClause;
         params.push(circle_id, circle_id);
@@ -182,6 +182,7 @@ export class StaffService {
       };
     } catch (e) {
       console.error('ERROR IN QUERY:', e);
+      require('fs').writeFileSync('c:\\\\Shanmukha\\\\apepdcl\\\\backend\\\\debug_error.log', String(e.stack || e));
       return { items: [], total: 0 };
     }
   }
