@@ -123,18 +123,14 @@ export class StaffService {
           s.full_name, 
           s.phone_number,
           CASE WHEN s.is_active = 1 THEN 'Available' ELSE 'Offline' END as current_status,
-          COALESCE(j.name, j.jurisdiction_level) as assigned_area
+          COALESCE(
+            CASE WHEN sj.jurisdiction_level = 'Section' THEN sec.section_name ELSE NULL END, 
+            sj.jurisdiction_level
+          ) as assigned_area
         FROM staff_users s
         JOIN designations d ON s.designation_id = d.designation_id
-        LEFT JOIN (
-          SELECT sj.staff_id, sj.jurisdiction_level, sj.jurisdiction_id,
-                 CASE 
-                   WHEN sj.jurisdiction_level = 'Section' THEN (SELECT section_name FROM sections WHERE section_id = sj.jurisdiction_id)
-                   ELSE NULL
-                 END as name
-          FROM staff_jurisdictions sj
-        ) j ON j.staff_id = s.staff_id
-        LEFT JOIN sections sec ON j.jurisdiction_level = 'Section' AND sec.section_id = j.jurisdiction_id
+        LEFT JOIN staff_jurisdictions sj ON sj.staff_id = s.staff_id
+        LEFT JOIN sections sec ON sj.jurisdiction_level = 'Section' AND sec.section_id = sj.jurisdiction_id
         LEFT JOIN subdivisions sub ON sec.subdivision_id = sub.subdivision_id
         LEFT JOIN divisions div ON sub.division_id = div.division_id
         WHERE d.title LIKE '%Lineman%'
@@ -162,24 +158,31 @@ export class StaffService {
       }
 
       if (circle_id) {
-        const circleClause = ` AND (div.circle_id = ? OR (j.jurisdiction_level = 'Circle' AND j.jurisdiction_id = ?))`;
+        const circleClause = ` AND (div.circle_id = ? OR (sj.jurisdiction_level = 'Circle' AND sj.jurisdiction_id = ?))`;
         queryStr += circleClause;
         countQueryStr += circleClause;
         params.push(circle_id, circle_id);
         countParams.push(circle_id, circle_id);
       }
 
-      queryStr += ` ORDER BY s.is_active DESC, s.full_name ASC LIMIT ? OFFSET ?`;
-      params.push(Number(limit), Number(offset));
+      queryStr += ` ORDER BY s.is_active DESC, s.full_name ASC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
 
+      console.log('EXECUTING QUERY:', queryStr, params);
       const linemen = await this.staffRepo.query(queryStr, params);
+      
+      console.log('EXECUTING COUNT:', countQueryStr, countParams);
       const totalResult = await this.staffRepo.query(countQueryStr, countParams);
       const total = totalResult.length > 0 ? Number(totalResult[0].total) : 0;
       
-      return { success: true, data: { items: linemen, total, page: Number(page), limit: Number(limit) } };
+      return { 
+        items: linemen, 
+        total, 
+        page: Number(page), 
+        limit: Number(limit) 
+      };
     } catch (e) {
       console.error('ERROR IN QUERY:', e);
-      return { success: false, data: { items: [], total: 0 } };
+      return { items: [], total: 0 };
     }
   }
 
