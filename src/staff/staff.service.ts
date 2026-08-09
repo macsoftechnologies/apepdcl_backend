@@ -111,10 +111,13 @@ export class StaffService {
     }
   }
 
-  async getLinemenRoster() {
+  async getLinemenRoster(query: any = {}) {
     console.log('--- getLinemenRoster() CALLED ---');
+    const { page = 1, limit = 10, search, circle_id } = query;
+    const offset = (page - 1) * limit;
+
     try {
-      const linemen = await this.staffRepo.query(`
+      let queryStr = `
         SELECT 
           s.staff_id as lineman_id, 
           s.full_name, 
@@ -124,21 +127,59 @@ export class StaffService {
         FROM staff_users s
         JOIN designations d ON s.designation_id = d.designation_id
         LEFT JOIN (
-          SELECT sj.staff_id, sj.jurisdiction_level,
+          SELECT sj.staff_id, sj.jurisdiction_level, sj.jurisdiction_id,
                  CASE 
                    WHEN sj.jurisdiction_level = 'Section' THEN (SELECT section_name FROM sections WHERE section_id = sj.jurisdiction_id)
                    ELSE NULL
                  END as name
           FROM staff_jurisdictions sj
         ) j ON j.staff_id = s.staff_id
+        LEFT JOIN sections sec ON j.jurisdiction_level = 'Section' AND sec.section_id = j.jurisdiction_id
+        LEFT JOIN subdivisions sub ON sec.subdivision_id = sub.subdivision_id
+        LEFT JOIN divisions div ON sub.division_id = div.division_id
         WHERE d.title LIKE '%Lineman%'
-        ORDER BY s.is_active DESC, s.full_name ASC
-      `);
-      console.log('Query completed, row count:', linemen?.length);
-      return { success: true, data: linemen };
+      `;
+      let countQueryStr = `
+        SELECT COUNT(DISTINCT s.staff_id) as total
+        FROM staff_users s
+        JOIN designations d ON s.designation_id = d.designation_id
+        LEFT JOIN staff_jurisdictions sj ON sj.staff_id = s.staff_id
+        LEFT JOIN sections sec ON sj.jurisdiction_level = 'Section' AND sec.section_id = sj.jurisdiction_id
+        LEFT JOIN subdivisions sub ON sec.subdivision_id = sub.subdivision_id
+        LEFT JOIN divisions div ON sub.division_id = div.division_id
+        WHERE d.title LIKE '%Lineman%'
+      `;
+      
+      let params: any[] = [];
+      let countParams: any[] = [];
+      
+      if (search) {
+        const searchClause = ` AND (s.full_name LIKE ? OR s.phone_number LIKE ?)`;
+        queryStr += searchClause;
+        countQueryStr += searchClause;
+        params.push(`%${search}%`, `%${search}%`);
+        countParams.push(`%${search}%`, `%${search}%`);
+      }
+
+      if (circle_id) {
+        const circleClause = ` AND (div.circle_id = ? OR (j.jurisdiction_level = 'Circle' AND j.jurisdiction_id = ?))`;
+        queryStr += circleClause;
+        countQueryStr += circleClause;
+        params.push(circle_id, circle_id);
+        countParams.push(circle_id, circle_id);
+      }
+
+      queryStr += ` ORDER BY s.is_active DESC, s.full_name ASC LIMIT ? OFFSET ?`;
+      params.push(Number(limit), Number(offset));
+
+      const linemen = await this.staffRepo.query(queryStr, params);
+      const totalResult = await this.staffRepo.query(countQueryStr, countParams);
+      const total = totalResult.length > 0 ? Number(totalResult[0].total) : 0;
+      
+      return { success: true, data: { items: linemen, total, page: Number(page), limit: Number(limit) } };
     } catch (e) {
       console.error('ERROR IN QUERY:', e);
-      return { success: false, data: [] };
+      return { success: false, data: { items: [], total: 0 } };
     }
   }
 

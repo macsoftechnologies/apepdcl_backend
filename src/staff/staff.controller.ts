@@ -34,8 +34,8 @@ export class StaffController {
   }
 
   @Get('linemen')
-  getLinemenRoster() {
-    return this.staffService.getLinemenRoster();
+  getLinemenRoster(@Query() query: any) {
+    return this.staffService.getLinemenRoster(query);
   }
 
   @Get(':id')
