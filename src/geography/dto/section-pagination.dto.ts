@@ -7,4 +7,14 @@ export class SectionPaginationDto extends PaginationDto {
   @IsInt()
   @IsOptional()
   subdivision_id?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  division_id?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  circle_id?: number;
 }

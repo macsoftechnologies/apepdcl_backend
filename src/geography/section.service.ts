@@ -20,7 +20,7 @@ export class SectionService {
   }
 
   async findAll(paginationDto: SectionPaginationDto) {
-    const { page = 1, limit = 10, search, subdivision_id } = paginationDto;
+    const { page = 1, limit = 10, search, subdivision_id, division_id, circle_id } = paginationDto;
     const skip = (page - 1) * limit;
 
     let where: any = { is_active: true };
@@ -33,9 +33,23 @@ export class SectionService {
         where[0].subdivision_id = subdivision_id;
         where[1].subdivision_id = subdivision_id;
       }
+      if (division_id) {
+        where[0].subdivision = { division_id };
+        where[1].subdivision = { division_id };
+      }
+      if (circle_id) {
+        where[0].subdivision = { ...where[0].subdivision, division: { circle_id } };
+        where[1].subdivision = { ...where[1].subdivision, division: { circle_id } };
+      }
     } else {
       if (subdivision_id) {
         where.subdivision_id = subdivision_id;
+      }
+      if (division_id) {
+        where.subdivision = { division_id };
+      }
+      if (circle_id) {
+        where.subdivision = { ...where.subdivision, division: { circle_id } };
       }
     }
 
@@ -43,7 +57,7 @@ export class SectionService {
       where,
       skip,
       take: limit,
-      relations: { subdivision: true },
+      relations: { subdivision: { division: true } },
       order: { created_at: 'DESC' },
     });
 
