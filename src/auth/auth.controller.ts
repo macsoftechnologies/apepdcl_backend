@@ -33,4 +33,13 @@ export class AuthController {
   getProfile(@Request() req: { user: { staff_id: number } }) {
     return this.authService.getProfile(req.user.staff_id);
   }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  logout(@Request() req: any) {
+    // In a stateless JWT setup, logout is primarily handled client-side.
+    // If blacklisting is needed, it would be implemented here.
+    return { message: 'Logged out successfully' };
+  }
 }
