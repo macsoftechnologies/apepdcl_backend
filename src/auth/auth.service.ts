@@ -61,6 +61,7 @@ export class AuthService {
       email: user.email,
       is_super_admin: user.is_super_admin,
       role_level: user.designation?.role_level,
+      is_staff: true,
     };
 
     return {
