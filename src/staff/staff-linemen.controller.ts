@@ -32,7 +32,7 @@ export class StaffLinemenController {
 
     if (isSuperAdmin) {
       const roster = await this.staffService.getLinemenRoster();
-      return roster.data;
+      return roster.items;
     } else {
       const jurisdictions = await this.jurisdictionRepo.find({
         where: { staff_id: staffId, jurisdiction_level: JurisdictionLevel.SECTION },
