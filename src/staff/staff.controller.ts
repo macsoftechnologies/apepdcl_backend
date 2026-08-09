@@ -33,6 +33,11 @@ export class StaffController {
     return this.staffService.findAll(paginationDto);
   }
 
+  @Get('linemen')
+  getLinemenRoster() {
+    return this.staffService.getLinemenRoster();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.staffService.findOne(id);

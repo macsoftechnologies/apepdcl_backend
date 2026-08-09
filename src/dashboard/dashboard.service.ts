@@ -158,6 +158,16 @@ export class DashboardService {
       avgResolutionHours = (totalMs / resolvedItems.length) / (1000 * 60 * 60);
     }
 
+    // Lineman Roster
+    const linemenRaw = await this.complaintRepo.query(`
+      SELECT s.staff_id, s.full_name, s.phone_number, s.is_active, d.title as designation,
+             (SELECT COUNT(*) FROM complaints c WHERE c.assigned_lineman_id = s.staff_id AND c.status IN ('Assigned', 'Working')) as active_tasks
+      FROM staff_users s
+      JOIN designations d ON s.designation_id = d.designation_id
+      WHERE d.title LIKE '%Lineman%'
+      ORDER BY s.is_active DESC, s.full_name ASC
+    `);
+
     return {
       success: true,
       data: {
@@ -172,6 +182,7 @@ export class DashboardService {
         top5Sections,
         oldest5Unresolved,
         recent10,
+        linemen: linemenRaw,
       }
     };
   }

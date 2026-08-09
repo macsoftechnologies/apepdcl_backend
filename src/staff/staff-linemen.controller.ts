@@ -15,6 +15,7 @@ import { StaffJurisdiction, JurisdictionLevel } from './entities/staff-jurisdict
 @Controller('staff/linemen')
 export class StaffLinemenController {
   constructor(
+    private readonly staffService: StaffService,
     @InjectRepository(LinemanDetails)
     private readonly linemanRepo: Repository<LinemanDetails>,
     @InjectRepository(StaffJurisdiction)
@@ -30,10 +31,8 @@ export class StaffLinemenController {
     let linemen;
 
     if (isSuperAdmin) {
-      linemen = await this.linemanRepo
-        .createQueryBuilder('lineman')
-        .leftJoinAndSelect('lineman.staff', 'staff')
-        .getMany();
+      const roster = await this.staffService.getLinemenRoster();
+      return roster.data;
     } else {
       const jurisdictions = await this.jurisdictionRepo.find({
         where: { staff_id: staffId, jurisdiction_level: JurisdictionLevel.SECTION },

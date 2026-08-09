@@ -46,6 +46,6 @@ import { join } from 'path';
       serveRoot: '/uploads',
     }),
   ],
-  providers: [SeederService],
+  providers: [],
 })
 export class AppModule {}

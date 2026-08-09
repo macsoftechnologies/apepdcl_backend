@@ -111,6 +111,37 @@ export class StaffService {
     }
   }
 
+  async getLinemenRoster() {
+    console.log('--- getLinemenRoster() CALLED ---');
+    try {
+      const linemen = await this.staffRepo.query(`
+        SELECT 
+          s.staff_id as lineman_id, 
+          s.full_name, 
+          s.phone_number,
+          CASE WHEN s.is_active = 1 THEN 'Available' ELSE 'Offline' END as current_status,
+          COALESCE(j.name, j.jurisdiction_level) as assigned_area
+        FROM staff_users s
+        JOIN designations d ON s.designation_id = d.designation_id
+        LEFT JOIN (
+          SELECT sj.staff_id, sj.jurisdiction_level,
+                 CASE 
+                   WHEN sj.jurisdiction_level = 'Section' THEN (SELECT section_name FROM sections WHERE section_id = sj.jurisdiction_id)
+                   ELSE NULL
+                 END as name
+          FROM staff_jurisdictions sj
+        ) j ON j.staff_id = s.staff_id
+        WHERE d.title LIKE '%Lineman%'
+        ORDER BY s.is_active DESC, s.full_name ASC
+      `);
+      console.log('Query completed, row count:', linemen?.length);
+      return { success: true, data: linemen };
+    } catch (e) {
+      console.error('ERROR IN QUERY:', e);
+      return { success: false, data: [] };
+    }
+  }
+
   async findAll(paginationDto: StaffPaginationDto) {
     const {
       page = 1,
