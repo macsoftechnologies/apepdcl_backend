@@ -53,7 +53,7 @@ export class StaffAuthService {
       throw new UnauthorizedException('Staff account is inactive');
     }
 
-    if (dto.otp !== '12345') {
+    if (dto.otp !== '1234') {
       throw new UnauthorizedException('Invalid OTP');
     }
 

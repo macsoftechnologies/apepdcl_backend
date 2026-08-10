@@ -30,7 +30,7 @@ export class AuthService {
     }
 
     // In a real application, send OTP via SMS gateway here.
-    // For now, we mock the OTP as '12345'
+    // For now, we mock the OTP as '1234'
     return {
       success: true,
       message: 'OTP sent successfully to your phone number',
@@ -52,7 +52,7 @@ export class AuthService {
     }
 
     // Mock validation
-    if (dto.otp !== '12345') {
+    if (dto.otp !== '1234') {
       throw new UnauthorizedException('Invalid OTP');
     }
 

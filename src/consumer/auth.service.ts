@@ -29,12 +29,12 @@ export class AuthService {
 
   async sendOtp(dto: SendOtpDto) {
     // Mock OTP logic
-    console.log(`Mock sending OTP 12345 to ${dto.mobile_number}`);
-    return { success: true, message: 'OTP sent successfully (Mock: 12345)' };
+    console.log(`Mock sending OTP 1234 to ${dto.mobile_number}`);
+    return { success: true, message: 'OTP sent successfully (Mock: 1234)' };
   }
 
   async verifyOtp(dto: VerifyOtpDto) {
-    if (dto.otp !== '12345') {
+    if (dto.otp !== '1234') {
       throw new UnauthorizedException('Invalid OTP');
     }
 
