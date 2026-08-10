@@ -41,12 +41,26 @@ export class ConsumerComplaintsService {
     return await this.complaintRepo.save(complaint);
   }
 
-  async findAllMyComplaints(consumerId: number) {
-    const items = await this.complaintRepo.find({
+  async findAllMyComplaints(consumerId: number, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await this.complaintRepo.findAndCount({
       where: { consumer_id: consumerId },
       order: { created_at: 'DESC' },
+      skip,
+      take: limit,
     });
-    return { success: true, message: 'Complaints fetched', data: items };
+    
+    const totalPages = Math.ceil(total / limit);
+    
+    return { 
+      success: true, 
+      message: 'Complaints fetched', 
+      data: items,
+      total,
+      page,
+      limit,
+      totalPages
+    };
   }
 
   async findOneMyComplaint(consumerId: number, complaintId: number) {

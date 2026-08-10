@@ -38,7 +38,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid OTP');
     }
 
-    // 1. Check if this is a Staff member
+    // 1. Check if this is a Consumer
+    const consumer = await this.consumerRepo.findOne({ where: { mobile_number: dto.mobile_number } });
+    if (consumer) {
+      const token = this.jwtService.sign({ sub: consumer.consumer_id, is_consumer: true });
+      return { 
+        success: true, 
+        message: 'Consumer login successful', 
+        data: { is_registered: true, is_staff: false, token, consumer } 
+      };
+    }
+
+    // 2. Check if this is a Staff member
     const staff = await this.staffRepo.findOne({ where: { phone_number: dto.mobile_number, is_active: true } });
     if (staff) {
       const allPerms = await this.permissionRepo.find();
@@ -60,21 +71,26 @@ export class AuthService {
       };
     }
 
-    // 2. Fall back to Consumer flow
-    const consumer = await this.consumerRepo.findOne({ where: { mobile_number: dto.mobile_number } });
-    if (!consumer) {
-      return { 
-        success: true, 
-        message: 'OTP verified. Consumer not registered.', 
-        data: { is_registered: false, is_staff: false } 
-      };
-    }
-
-    const token = this.jwtService.sign({ sub: consumer.consumer_id, is_consumer: true });
+    // 3. Fall back to not registered
     return { 
       success: true, 
-      message: 'Consumer login successful', 
-      data: { is_registered: true, is_staff: false, token, consumer } 
+      message: 'OTP verified. Consumer not registered.', 
+      data: { is_registered: false, is_staff: false } 
+    };
+  }
+
+  async getProfile(consumerId: number) {
+    const consumer = await this.consumerRepo.findOne({ 
+      where: { consumer_id: consumerId },
+      relations: ['section']
+    });
+    if (!consumer) {
+      throw new UnauthorizedException('Consumer not found');
+    }
+    return {
+      success: true,
+      message: 'Profile fetched successfully',
+      data: consumer
     };
   }
 

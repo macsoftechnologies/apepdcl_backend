@@ -1,9 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RegisterConsumerDto } from './dto/register-consumer.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ConsumerAuthGuard } from '../common/guards/consumer-auth.guard';
 
 @ApiTags('Consumer - Auth')
 @Controller('consumer/auth')
@@ -23,5 +24,12 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterConsumerDto) {
     return this.authService.register(dto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(ConsumerAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req: any) {
+    return this.authService.getProfile(req.user.consumer_id);
   }
 }

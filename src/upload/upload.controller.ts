@@ -49,10 +49,10 @@ export class UploadController {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    // Return full url in real world, returning relative for now
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     return {
       success: true,
-      url: `/uploads/${file.filename}`,
+      url: `${baseUrl}/uploads/${file.filename}`,
     };
   }
 }
