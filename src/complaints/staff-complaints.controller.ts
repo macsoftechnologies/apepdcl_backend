@@ -28,4 +28,10 @@ export class StaffComplaintsController {
   assignLineman(@Param('id', ParseIntPipe) id: number, @Body('lineman_id') lineman_id: number, @Request() req: any) {
     return this.staffComplaintsService.assignLineman(req.user.staff_id, req.user.is_super_admin, req.user.role_level, id, lineman_id);
   }
+
+  @Patch(':id/status')
+  @RequirePermissions('UPDATE_COMPLAINT_STATUS')
+  updateStatus(@Param('id', ParseIntPipe) id: number, @Body('status') status: any, @Request() req: any) {
+    return this.staffComplaintsService.updateStatus(req.user.staff_id, req.user.is_super_admin, req.user.role_level, id, status);
+  }
 }

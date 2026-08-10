@@ -164,6 +164,18 @@ export class StaffComplaintsService {
     return this.complaintRepo.save(complaint);
   }
 
+  async updateStatus(staffId: number, isSuperAdmin: boolean, roleLevel: number, complaintId: number, status: ComplaintStatus) {
+    const complaint = await this.findOneForStaff(staffId, isSuperAdmin, roleLevel, complaintId);
+    
+    complaint.status = status;
+    
+    if (status === ComplaintStatus.RESOLVED) {
+      complaint.resolved_at = new Date();
+    }
+
+    return this.complaintRepo.save(complaint);
+  }
+
   private getJurisdictionCondition(level: JurisdictionLevel, id: number) {
     const paramName = `jur_${level}_${id}`;
     switch (level) {
