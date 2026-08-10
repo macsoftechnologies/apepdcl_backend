@@ -5,7 +5,7 @@ import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { LinemanDetails } from './entities/lineman-details.entity';
 import { StaffJurisdiction, JurisdictionLevel } from './entities/staff-jurisdiction.entity';
 
@@ -35,20 +35,47 @@ export class StaffLinemenController {
       return roster.items;
     } else {
       const jurisdictions = await this.jurisdictionRepo.find({
-        where: { staff_id: staffId, jurisdiction_level: JurisdictionLevel.SECTION },
+        where: { staff_id: staffId },
       });
 
-      const sectionIds = jurisdictions.map(j => j.jurisdiction_id);
-
-      if (sectionIds.length === 0) {
+      if (jurisdictions.length === 0) {
         return [];
       }
 
-      linemen = await this.linemanRepo
+      const qb = this.linemanRepo
         .createQueryBuilder('lineman')
         .leftJoinAndSelect('lineman.staff', 'staff')
-        .where('lineman.section_id IN (:...sectionIds)', { sectionIds })
-        .getMany();
+        .leftJoinAndSelect('lineman.section', 'section')
+        .leftJoinAndSelect('section.subdivision', 'subdivision')
+        .leftJoinAndSelect('subdivision.division', 'division')
+        .leftJoinAndSelect('division.circle', 'circle');
+
+      qb.andWhere(
+        new Brackets((bracket) => {
+          jurisdictions.forEach((j, index) => {
+            let sql = '';
+            let params = {};
+            if (j.jurisdiction_level === 'Circle') {
+              sql = 'circle.circle_id = :id' + index;
+            } else if (j.jurisdiction_level === 'Division') {
+              sql = 'division.division_id = :id' + index;
+            } else if (j.jurisdiction_level === 'SubDivision') {
+              sql = 'subdivision.subdivision_id = :id' + index;
+            } else {
+              sql = 'section.section_id = :id' + index;
+            }
+            params = { ['id' + index]: j.jurisdiction_id };
+
+            if (index === 0) {
+              bracket.where(sql, params);
+            } else {
+              bracket.orWhere(sql, params);
+            }
+          });
+        }),
+      );
+
+      linemen = await qb.getMany();
     }
 
     return linemen.map(l => ({
