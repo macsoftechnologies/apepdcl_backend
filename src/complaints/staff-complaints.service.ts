@@ -64,7 +64,7 @@ export class StaffComplaintsService {
       }
     } else if (roleLevel === 1) {
       // Lineman: fetch lineman_id and filter by assigned_lineman_id
-      const lineman = await query.manager.query(
+      const lineman = await this.complaintRepo.manager.query(
         'SELECT lineman_id FROM linemen_details WHERE staff_id = ?',
         [staffId]
       );
@@ -157,7 +157,7 @@ export class StaffComplaintsService {
         }),
       );
     } else if (roleLevel === 1) {
-      const lineman = await query.manager.query(
+      const lineman = await this.complaintRepo.manager.query(
         'SELECT lineman_id FROM linemen_details WHERE staff_id = ?',
         [staffId]
       );

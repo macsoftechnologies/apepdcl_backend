@@ -43,7 +43,7 @@ export class StaffDashboardService {
       );
     } else if (roleLevel === 1) {
       // Lineman: query lineman_details to get lineman_id
-      const lineman = await query.manager.query(
+      const lineman = await this.complaintRepo.manager.query(
         'SELECT lineman_id FROM linemen_details WHERE staff_id = ?',
         [staffId]
       );
