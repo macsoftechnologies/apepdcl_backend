@@ -51,7 +51,7 @@ export class UploadController {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.BASE_URL || (process.env.NODE_ENV === 'production' ? 'https://launchpaad.tech/apepdclbackend' : 'https://launchpaad.tech/apepdclbackend');
     return {
       success: true,
       url: `${baseUrl}/uploads/${file.filename}`,
