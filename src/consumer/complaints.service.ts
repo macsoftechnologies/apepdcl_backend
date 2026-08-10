@@ -34,7 +34,7 @@ export class ConsumerComplaintsService {
     const complaint = this.complaintRepo.create({
       ...dto,
       consumer_id: consumerId,
-      section_id: consumer.section_id,
+      section_id: consumer.section_id || 1, // Fallback to 1 if consumer has no section
       ticket_number,
     });
 
