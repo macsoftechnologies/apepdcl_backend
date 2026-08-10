@@ -128,10 +128,11 @@ export class AuthService {
     consumer.address = dto.address;
     consumer.gps_lat = dto.gps_lat;
     consumer.gps_lng = dto.gps_lng;
-    if (section_id !== undefined) {
-      consumer.section_id = section_id;
+    if (section_id === undefined) {
+      throw new BadRequestException('Invalid Service Connection Number. This number is not registered in our valid geographical sections. Please contact support.');
     }
-
+    
+    consumer.section_id = section_id;
     const saved = await this.consumerRepo.save(consumer);
     const token = this.jwtService.sign({ sub: saved.consumer_id, is_consumer: true });
 
