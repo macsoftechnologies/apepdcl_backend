@@ -50,6 +50,7 @@ export class StaffDashboardService {
     }
 
     const complaints = await query.getMany();
+    console.log('Dashboard complaints fetched:', complaints.length);
 
     let total = 0;
     let pending = 0;
