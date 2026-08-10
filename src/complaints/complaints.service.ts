@@ -112,6 +112,8 @@ export class ComplaintsService {
       .leftJoinAndSelect('section.subdivision', 'subdivision')
       .leftJoinAndSelect('subdivision.division', 'division')
       .leftJoinAndSelect('division.circle', 'circle')
+      .leftJoinAndSelect('complaint.assigned_lineman', 'assigned_lineman')
+      .leftJoinAndSelect('assigned_lineman.staff', 'lineman_staff')
       .where('complaint.complaint_id = :id', { id })
       .getOne();
 

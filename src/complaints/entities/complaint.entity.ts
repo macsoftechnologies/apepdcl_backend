@@ -116,4 +116,8 @@ export class Complaint {
   @ManyToOne(() => Section)
   @JoinColumn({ name: 'section_id' })
   section: Section;
+
+  @ManyToOne('LinemanDetails')
+  @JoinColumn({ name: 'assigned_lineman_id', referencedColumnName: 'lineman_id' })
+  assigned_lineman: any;
 }
