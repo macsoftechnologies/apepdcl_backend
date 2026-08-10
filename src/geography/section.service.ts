@@ -57,7 +57,7 @@ export class SectionService {
       where,
       skip,
       take: limit,
-      relations: { subdivision: { division: true } },
+      relations: { subdivision: { division: { circle: true } } },
       order: { created_at: 'DESC' },
     });
 
