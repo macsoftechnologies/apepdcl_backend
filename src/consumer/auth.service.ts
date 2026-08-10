@@ -82,7 +82,7 @@ export class AuthService {
   async getProfile(consumerId: number) {
     const consumer = await this.consumerRepo.findOne({ 
       where: { consumer_id: consumerId },
-      relations: ['section']
+      relations: { section: true }
     });
     if (!consumer) {
       throw new UnauthorizedException('Consumer not found');
