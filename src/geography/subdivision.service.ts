@@ -50,7 +50,7 @@ export class SubdivisionService {
       where,
       skip,
       take: limit,
-      relations: { division: true },
+      relations: { division: { circle: true } },
       order: { created_at: 'DESC' },
     });
 
