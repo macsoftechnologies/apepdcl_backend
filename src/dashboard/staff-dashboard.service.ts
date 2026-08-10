@@ -20,19 +20,13 @@ export class StaffDashboardService {
       .leftJoin('section.subdivision', 'subdivision')
       .leftJoin('subdivision.division', 'division');
 
-    if (!isSuperAdmin && roleLevel !== 6) {
+    if (!isSuperAdmin && roleLevel !== 1) { // 1 = Lineman
       const jurisdictions = await this.jurisdictionRepo.find({
         where: { staff_id: staffId },
       });
 
       if (jurisdictions.length === 0) {
-        return {
-          total_complaints: 0,
-          pending_complaints: 0,
-          assigned_complaints: 0,
-          working_complaints: 0,
-          resolved_complaints: 0,
-        };
+        return { total_complaints: 0, pending_complaints: 0, assigned_complaints: 0, working_complaints: 0, resolved_complaints: 0 };
       }
 
       query.andWhere(
@@ -47,6 +41,16 @@ export class StaffDashboardService {
           });
         }),
       );
+    } else if (roleLevel === 1) {
+      // Lineman: query lineman_details to get lineman_id
+      const lineman = await query.manager.query(
+        'SELECT lineman_id FROM linemen_details WHERE staff_id = ?',
+        [staffId]
+      );
+      if (lineman.length === 0) {
+         return { total_complaints: 0, pending_complaints: 0, assigned_complaints: 0, working_complaints: 0, resolved_complaints: 0 };
+      }
+      query.andWhere('complaint.assigned_lineman_id = :linemanId', { linemanId: lineman[0].lineman_id });
     }
 
     const complaints = await query.getMany();

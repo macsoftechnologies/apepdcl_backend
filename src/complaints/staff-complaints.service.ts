@@ -44,7 +44,7 @@ export class StaffComplaintsService {
       .leftJoinAndSelect('division.circle', 'circle');
 
     // Apply Jurisdiction Scoping
-    if (!isSuperAdmin && roleLevel !== 6) {
+    if (!isSuperAdmin && roleLevel !== 1) { // 1 = Lineman
       if (jurisdictions.length === 0) {
         // If no jurisdictions, return empty
         query.andWhere('1 = 0');
@@ -61,6 +61,17 @@ export class StaffComplaintsService {
             });
           }),
         );
+      }
+    } else if (roleLevel === 1) {
+      // Lineman: fetch lineman_id and filter by assigned_lineman_id
+      const lineman = await query.manager.query(
+        'SELECT lineman_id FROM linemen_details WHERE staff_id = ?',
+        [staffId]
+      );
+      if (lineman.length === 0) {
+         query.andWhere('1 = 0'); // No lineman mapping found
+      } else {
+         query.andWhere('complaint.assigned_lineman_id = :linemanId', { linemanId: lineman[0].lineman_id });
       }
     }
 
@@ -128,7 +139,7 @@ export class StaffComplaintsService {
       .leftJoinAndSelect('assigned_lineman.staff', 'lineman_staff')
       .where('complaint.complaint_id = :id', { id });
 
-    if (!isSuperAdmin && roleLevel !== 6) {
+    if (!isSuperAdmin && roleLevel !== 1) {
       if (jurisdictions.length === 0) {
         throw new NotFoundException(`Complaint with ID ${id} not found in your jurisdiction`);
       }
@@ -145,6 +156,15 @@ export class StaffComplaintsService {
           });
         }),
       );
+    } else if (roleLevel === 1) {
+      const lineman = await query.manager.query(
+        'SELECT lineman_id FROM linemen_details WHERE staff_id = ?',
+        [staffId]
+      );
+      if (lineman.length === 0) {
+         throw new NotFoundException(`Complaint with ID ${id} not found (Lineman details missing)`);
+      }
+      query.andWhere('complaint.assigned_lineman_id = :linemanId', { linemanId: lineman[0].lineman_id });
     }
 
     const complaint = await query.getOne();
