@@ -12,6 +12,10 @@ export class StaffDashboardController {
 
   @Get()
   getDashboardStats(@Request() req: any) {
-    return this.staffDashboardService.getDashboardStats(req.user.staff_id);
+    return this.staffDashboardService.getDashboardStats(
+      req.user.staff_id, 
+      req.user.is_super_admin, 
+      req.user.role_level
+    );
   }
 }

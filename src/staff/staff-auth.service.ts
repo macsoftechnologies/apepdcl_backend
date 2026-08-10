@@ -102,4 +102,45 @@ export class StaffAuthService {
       permissions: permissionMap,
     };
   }
+  async getProfile(staffId: number) {
+    const user = await this.staffRepo.findOne({
+      where: { staff_id: staffId },
+      relations: { designation: true, jurisdictions: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Staff account not found');
+    }
+
+    const permissions = await this.staffPermRepo.find({
+      where: { staff_id: user.staff_id },
+      relations: { permission: true },
+    });
+
+    const permissionMap = permissions.reduce((acc, p) => {
+      acc[p.permission.permission_key] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+
+    const linemanDetails = await this.linemanRepo.findOne({
+      where: { staff_id: user.staff_id },
+    });
+
+    return {
+      success: true,
+      data: {
+        staff_id: user.staff_id,
+        full_name: user.full_name,
+        phone_number: user.phone_number,
+        email: user.email,
+        designation: { designation_name: user.designation?.title }, // matches ui
+        role_level: user.designation?.role_level,
+        is_super_admin: user.is_super_admin,
+        jurisdictions: user.jurisdictions,
+        lineman_id: linemanDetails?.lineman_id,
+        section_id: linemanDetails?.section_id,
+        permissions: permissionMap,
+      }
+    };
+  }
 }

@@ -13,39 +13,41 @@ export class StaffDashboardService {
     private readonly jurisdictionRepo: Repository<StaffJurisdiction>,
   ) {}
 
-  async getDashboardStats(staffId: number) {
-    const jurisdictions = await this.jurisdictionRepo.find({
-      where: { staff_id: staffId },
-    });
-
-    if (jurisdictions.length === 0) {
-      return {
-        total_complaints: 0,
-        pending_complaints: 0,
-        assigned_complaints: 0,
-        working_complaints: 0,
-        resolved_complaints: 0,
-      };
-    }
-
+  async getDashboardStats(staffId: number, isSuperAdmin: boolean, roleLevel: number) {
     const query = this.complaintRepo
       .createQueryBuilder('complaint')
       .leftJoin('complaint.section', 'section')
       .leftJoin('section.subdivision', 'subdivision')
       .leftJoin('subdivision.division', 'division');
 
-    query.andWhere(
-      new Brackets((qb) => {
-        jurisdictions.forEach((j, index) => {
-          const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
-          if (index === 0) {
-            qb.where(condition.sql, condition.params);
-          } else {
-            qb.orWhere(condition.sql, condition.params);
-          }
-        });
-      }),
-    );
+    if (!isSuperAdmin && roleLevel !== 6) {
+      const jurisdictions = await this.jurisdictionRepo.find({
+        where: { staff_id: staffId },
+      });
+
+      if (jurisdictions.length === 0) {
+        return {
+          total_complaints: 0,
+          pending_complaints: 0,
+          assigned_complaints: 0,
+          working_complaints: 0,
+          resolved_complaints: 0,
+        };
+      }
+
+      query.andWhere(
+        new Brackets((qb) => {
+          jurisdictions.forEach((j, index) => {
+            const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
+            if (index === 0) {
+              qb.where(condition.sql, condition.params);
+            } else {
+              qb.orWhere(condition.sql, condition.params);
+            }
+          });
+        }),
+      );
+    }
 
     const complaints = await query.getMany();
 
