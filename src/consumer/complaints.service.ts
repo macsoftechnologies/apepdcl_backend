@@ -38,7 +38,12 @@ export class ConsumerComplaintsService {
       ticket_number,
     });
 
-    return await this.complaintRepo.save(complaint);
+    try {
+      return await this.complaintRepo.save(complaint);
+    } catch (error) {
+      require('fs').writeFileSync('c:/Shanmukha/apepdcl/backend/db_error.log', String(error) + '\n' + (error.stack || ''));
+      throw error;
+    }
   }
 
   async findAllMyComplaints(consumerId: number, page: number = 1, limit: number = 10) {
