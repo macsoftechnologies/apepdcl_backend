@@ -35,4 +35,9 @@ export class ComplaintsPaginationDto extends PaginationDto {
   @IsOptional()
   section_id?: number;
 
+  @Type(() => Number)
+  @IsInt()
+  @IsOptional()
+  lineman_id?: number;
+
 }

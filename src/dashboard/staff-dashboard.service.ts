@@ -30,10 +30,14 @@ export class StaffDashboardService {
       }
 
       if (targetLevel && targetId) {
-        // Apply targeted drill-down overriding the base jurisdiction
-        // (Assuming the frontend only requests valid child jurisdictions)
-        const targetCondition = this.getJurisdictionCondition(targetLevel, targetId);
-        query.andWhere(targetCondition.sql, targetCondition.params);
+        if (targetLevel as any === 'Lineman') {
+          query.andWhere('complaint.assigned_lineman_id = :targetId', { targetId });
+        } else {
+          // Apply targeted drill-down overriding the base jurisdiction
+          // (Assuming the frontend only requests valid child jurisdictions)
+          const targetCondition = this.getJurisdictionCondition(targetLevel, targetId);
+          query.andWhere(targetCondition.sql, targetCondition.params);
+        }
       } else {
         query.andWhere(
           new Brackets((qb) => {
@@ -87,7 +91,7 @@ export class StaffDashboardService {
   }
 
   async getLocationBreakdown(staffId: number, isSuperAdmin: boolean, roleLevel: number, targetLevel?: JurisdictionLevel, targetId?: number) {
-    if (isSuperAdmin || roleLevel <= 2) {
+    if (isSuperAdmin || roleLevel <= 1) {
       return { success: true, data: [] };
     }
 
@@ -116,16 +120,25 @@ export class StaffDashboardService {
     } else if (effectiveLevel === 3) {
       groupBySelect = 'section.section_name AS name, section.section_id AS id, \'Section\' as type';
       groupByField = 'section.section_id';
+    } else if (effectiveLevel === 2) {
+      groupBySelect = 'lineman_staff.full_name AS name, complaint.assigned_lineman_id AS id, \'Lineman\' as type';
+      groupByField = 'complaint.assigned_lineman_id';
     } else {
-      return { success: true, data: [] }; // Cannot break down further than Section
+      return { success: true, data: [] }; // Cannot break down further than Lineman
     }
 
     const query = this.complaintRepo
       .createQueryBuilder('complaint')
       .leftJoin('complaint.section', 'section')
       .leftJoin('section.subdivision', 'subdivision')
-      .leftJoin('subdivision.division', 'division')
-      .select(groupBySelect)
+      .leftJoin('subdivision.division', 'division');
+      
+    if (effectiveLevel === 2) {
+      query.innerJoin('complaint.assigned_lineman', 'assigned_lineman');
+      query.innerJoin('assigned_lineman.staff', 'lineman_staff');
+    }
+    
+    query.select(groupBySelect)
       .addSelect('COUNT(complaint.complaint_id) AS total_complaints')
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RAISED}' THEN 1 ELSE 0 END) AS pending_complaints`)
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.ASSIGNED}' THEN 1 ELSE 0 END) AS assigned_complaints`)
@@ -133,8 +146,12 @@ export class StaffDashboardService {
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RESOLVED}' THEN 1 ELSE 0 END) AS resolved_complaints`)
       .where(new Brackets((qb) => {
         if (targetLevel && targetId) {
-          const targetCondition = this.getJurisdictionCondition(targetLevel, targetId);
-          qb.where(targetCondition.sql, targetCondition.params);
+          if (targetLevel as any === 'Lineman') {
+             qb.where('complaint.assigned_lineman_id = :targetId', { targetId });
+          } else {
+             const targetCondition = this.getJurisdictionCondition(targetLevel, targetId);
+             qb.where(targetCondition.sql, targetCondition.params);
+          }
         } else {
           jurisdictions.forEach((j, index) => {
             const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);

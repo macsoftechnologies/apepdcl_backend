@@ -30,6 +30,7 @@ export class StaffComplaintsService {
       division_id,
       subdivision_id,
       section_id,
+      lineman_id,
       from_date,
       to_date,
     } = paginationDto;
@@ -89,7 +90,9 @@ export class StaffComplaintsService {
       query.andWhere('complaint.category_key = :category_key', { category_key });
     }
 
-    if (section_id) {
+    if (lineman_id) {
+      query.andWhere('complaint.assigned_lineman_id = :lineman_id', { lineman_id });
+    } else if (section_id) {
       query.andWhere('complaint.section_id = :section_id', { section_id });
     } else if (subdivision_id) {
       query.andWhere('section.subdivision_id = :subdivision_id', { subdivision_id });
