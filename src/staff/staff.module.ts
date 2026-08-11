@@ -5,6 +5,8 @@ import { StaffService } from './staff.service';
 import { StaffController } from './staff.controller';
 import { JurisdictionService } from './jurisdiction.service';
 import { JurisdictionController } from './jurisdiction.controller';
+import { HierarchyService } from './hierarchy.service';
+import { HierarchyController } from './hierarchy.controller';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StaffUser } from './entities/staff-user.entity';
@@ -32,8 +34,8 @@ import { StaffLinemenController } from './staff-linemen.controller';
     ]),
     AuthModule,
   ],
-  providers: [DesignationService, StaffService, JurisdictionService, StaffAuthService, PermissionsGuard],
-  controllers: [StaffLinemenController, DesignationController, StaffController, JurisdictionController, StaffAuthController],
+  providers: [DesignationService, StaffService, JurisdictionService, StaffAuthService, PermissionsGuard, HierarchyService],
+  controllers: [StaffLinemenController, DesignationController, StaffController, JurisdictionController, StaffAuthController, HierarchyController],
   exports: [StaffService, StaffAuthService, PermissionsGuard, TypeOrmModule],
 })
 export class StaffModule {}
