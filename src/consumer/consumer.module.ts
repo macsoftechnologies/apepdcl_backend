@@ -13,10 +13,13 @@ import { ConsumerJwtStrategy } from './consumer-jwt.strategy';
 import { StaffUser } from '../staff/entities/staff-user.entity';
 import { StaffPermission } from '../staff/entities/staff-permission.entity';
 import { Permission } from '../staff/entities/permission.entity';
+import { StaffJurisdiction } from '../staff/entities/staff-jurisdiction.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Consumer, Section, Complaint, StaffUser, StaffPermission, Permission]),
+    TypeOrmModule.forFeature([Consumer, Section, Complaint, StaffUser, StaffPermission, Permission, StaffJurisdiction]),
+    NotificationsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

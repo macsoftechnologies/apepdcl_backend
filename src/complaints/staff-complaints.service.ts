@@ -4,6 +4,8 @@ import { Repository, Brackets } from 'typeorm';
 import { Complaint, ComplaintStatus } from './entities/complaint.entity';
 import { ComplaintsPaginationDto } from './dto/complaints-pagination.dto';
 import { StaffJurisdiction, JurisdictionLevel } from '../staff/entities/staff-jurisdiction.entity';
+import { LinemanDetails } from '../staff/entities/lineman-details.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class StaffComplaintsService {
@@ -12,6 +14,9 @@ export class StaffComplaintsService {
     private readonly complaintRepo: Repository<Complaint>,
     @InjectRepository(StaffJurisdiction)
     private readonly jurisdictionRepo: Repository<StaffJurisdiction>,
+    @InjectRepository(LinemanDetails)
+    private readonly linemanRepo: Repository<LinemanDetails>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async findAllForStaff(staffId: number, isSuperAdmin: boolean, roleLevel: number, paginationDto: ComplaintsPaginationDto) {
@@ -183,7 +188,23 @@ export class StaffComplaintsService {
     complaint.status = ComplaintStatus.ASSIGNED;
     complaint.assigned_at = new Date();
 
-    return this.complaintRepo.save(complaint);
+    const savedComplaint = await this.complaintRepo.save(complaint);
+
+    try {
+      const lineman = await this.linemanRepo.findOne({ where: { lineman_id: linemanId } });
+      if (lineman && lineman.staff_id) {
+        await this.notificationsService.createNotification(
+          lineman.staff_id,
+          'New Task Assigned',
+          `You have been assigned to Complaint #${savedComplaint.ticket_number}.`,
+          savedComplaint.complaint_id
+        );
+      }
+    } catch (notifErr) {
+      console.error('Failed to notify lineman:', notifErr);
+    }
+
+    return savedComplaint;
   }
 
   async updateStatus(
@@ -213,7 +234,22 @@ export class StaffComplaintsService {
       complaint.working_at = new Date();
     }
 
-    return this.complaintRepo.save(complaint);
+    const savedComplaint = await this.complaintRepo.save(complaint);
+
+    if (status === ComplaintStatus.RESOLVED && savedComplaint.assigned_by) {
+      try {
+        await this.notificationsService.createNotification(
+          savedComplaint.assigned_by,
+          'Complaint Resolved',
+          `Complaint #${savedComplaint.ticket_number} has been marked as Resolved by the assigned lineman.`,
+          savedComplaint.complaint_id
+        );
+      } catch (notifErr) {
+        console.error('Failed to notify AE of resolution:', notifErr);
+      }
+    }
+
+    return savedComplaint;
   }
 
   private getJurisdictionCondition(level: JurisdictionLevel, id: number) {

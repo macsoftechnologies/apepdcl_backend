@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Complaint } from '../complaints/entities/complaint.entity';
 import { CreateConsumerComplaintDto } from './dto/create-consumer-complaint.dto';
 import { Consumer } from '../complaints/entities/consumer.entity';
+import { StaffJurisdiction } from '../staff/entities/staff-jurisdiction.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class ConsumerComplaintsService {
@@ -12,6 +14,9 @@ export class ConsumerComplaintsService {
     private readonly complaintRepo: Repository<Complaint>,
     @InjectRepository(Consumer)
     private readonly consumerRepo: Repository<Consumer>,
+    @InjectRepository(StaffJurisdiction)
+    private readonly staffJurisdictionRepo: Repository<StaffJurisdiction>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(consumerId: number, dto: CreateConsumerComplaintDto) {
@@ -39,8 +44,27 @@ export class ConsumerComplaintsService {
     });
 
     try {
-      return await this.complaintRepo.save(complaint);
-    } catch (error) {
+      const savedComplaint = await this.complaintRepo.save(complaint);
+      
+      // Notify the Section AE (if they exist)
+      try {
+        const aes = await this.staffJurisdictionRepo.find({
+          where: { jurisdiction_level: 'Section', jurisdiction_id: savedComplaint.section_id }
+        });
+        for (const ae of aes) {
+          await this.notificationsService.createNotification(
+            ae.staff_id,
+            'New Complaint Raised',
+            `A new complaint #${savedComplaint.ticket_number} has been raised in your section.`,
+            savedComplaint.complaint_id
+          );
+        }
+      } catch (notifErr) {
+        console.error('Failed to send notification for new complaint:', notifErr);
+      }
+
+      return savedComplaint;
+    } catch (error: any) {
       require('fs').writeFileSync('c:/Shanmukha/apepdcl/backend/db_error.log', String(error) + '\n' + (error.stack || ''));
       throw error;
     }

@@ -7,12 +7,15 @@ import { ComplaintsController } from './complaints.controller';
 import { StaffComplaintsController } from './staff-complaints.controller';
 import { StaffComplaintsService } from './staff-complaints.service';
 import { StaffJurisdiction } from '../staff/entities/staff-jurisdiction.entity';
+import { LinemanDetails } from '../staff/entities/lineman-details.entity';
 import { StaffModule } from '../staff/staff.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Complaint, Consumer, StaffJurisdiction]),
-    StaffModule
+    TypeOrmModule.forFeature([Complaint, Consumer, StaffJurisdiction, LinemanDetails]),
+    StaffModule,
+    NotificationsModule
   ],
   controllers: [ComplaintsController, StaffComplaintsController],
   providers: [ComplaintsService, StaffComplaintsService],
