@@ -112,6 +112,8 @@ export class StaffDashboardService {
       .select(groupBySelect)
       .addSelect('COUNT(complaint.complaint_id) AS total_complaints')
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RAISED}' THEN 1 ELSE 0 END) AS pending_complaints`)
+      .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.ASSIGNED}' THEN 1 ELSE 0 END) AS assigned_complaints`)
+      .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.WORKING}' THEN 1 ELSE 0 END) AS working_complaints`)
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RESOLVED}' THEN 1 ELSE 0 END) AS resolved_complaints`)
       .where(new Brackets((qb) => {
         jurisdictions.forEach((j, index) => {
@@ -135,6 +137,8 @@ export class StaffDashboardService {
         name: r.name,
         total: parseInt(r.total_complaints || 0),
         pending: parseInt(r.pending_complaints || 0),
+        assigned: parseInt(r.assigned_complaints || 0),
+        working: parseInt(r.working_complaints || 0),
         resolved: parseInt(r.resolved_complaints || 0)
       }))
     };
