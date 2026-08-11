@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Complaint } from '../complaints/entities/complaint.entity';
 import { CreateConsumerComplaintDto } from './dto/create-consumer-complaint.dto';
 import { Consumer } from '../complaints/entities/consumer.entity';
-import { StaffJurisdiction } from '../staff/entities/staff-jurisdiction.entity';
+import { StaffJurisdiction, JurisdictionLevel } from '../staff/entities/staff-jurisdiction.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -49,7 +49,7 @@ export class ConsumerComplaintsService {
       // Notify the Section AE (if they exist)
       try {
         const aes = await this.staffJurisdictionRepo.find({
-          where: { jurisdiction_level: 'Section', jurisdiction_id: savedComplaint.section_id }
+          where: { jurisdiction_level: JurisdictionLevel.SECTION, jurisdiction_id: savedComplaint.section_id }
         });
         for (const ae of aes) {
           await this.notificationsService.createNotification(
