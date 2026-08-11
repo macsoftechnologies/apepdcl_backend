@@ -6,6 +6,7 @@ import { CreateConsumerComplaintDto } from './dto/create-consumer-complaint.dto'
 import { Consumer } from '../complaints/entities/consumer.entity';
 import { StaffJurisdiction, JurisdictionLevel } from '../staff/entities/staff-jurisdiction.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class ConsumerComplaintsService {
@@ -46,18 +47,52 @@ export class ConsumerComplaintsService {
     try {
       const savedComplaint = await this.complaintRepo.save(complaint);
       
-      // Notify the Section AE (if they exist)
+      // Fetch full hierarchy to notify AE, ADE, DE
       try {
-        const aes = await this.staffJurisdictionRepo.find({
-          where: { jurisdiction_level: JurisdictionLevel.SECTION, jurisdiction_id: savedComplaint.section_id }
+        const fullComplaint = await this.complaintRepo.findOne({
+          where: { complaint_id: savedComplaint.complaint_id },
+          relations: {
+            section: {
+              subdivision: {
+                division: true
+              }
+            }
+          }
         });
-        for (const ae of aes) {
-          await this.notificationsService.createNotification(
-            ae.staff_id,
-            'New Complaint Raised',
-            `A new complaint #${savedComplaint.ticket_number} has been raised in your section.`,
-            savedComplaint.complaint_id
-          );
+
+        if (fullComplaint && fullComplaint.section) {
+          const sectionId = fullComplaint.section.section_id;
+          const subdivId = fullComplaint.section.subdivision_id;
+          const divId = fullComplaint.section.subdivision.division_id;
+
+          const staffToNotify = await this.staffJurisdictionRepo.createQueryBuilder('jurisdiction')
+            .leftJoin('jurisdiction.staff', 'staff')
+            .leftJoin('staff.designation', 'designation')
+            .where('designation.role_level > 1') // Exclude linemen
+            .andWhere(new Brackets(qb => {
+              qb.where('jurisdiction.jurisdiction_level = :sectionLevel AND jurisdiction.jurisdiction_id = :sectionId', { 
+                sectionLevel: JurisdictionLevel.SECTION, sectionId: sectionId 
+              })
+              .orWhere('jurisdiction.jurisdiction_level = :subdivLevel AND jurisdiction.jurisdiction_id = :subdivId', { 
+                subdivLevel: JurisdictionLevel.SUBDIVISION, subdivId: subdivId 
+              })
+              .orWhere('jurisdiction.jurisdiction_level = :divLevel AND jurisdiction.jurisdiction_id = :divId', { 
+                divLevel: JurisdictionLevel.DIVISION, divId: divId 
+              });
+            }))
+            .getMany();
+
+          // Deduplicate staff_ids just in case one person covers multiple levels
+          const uniqueStaffIds = [...new Set(staffToNotify.map(j => j.staff_id))];
+
+          for (const staffId of uniqueStaffIds) {
+            await this.notificationsService.createNotification(
+              staffId,
+              'New Complaint Raised',
+              `A new complaint #${savedComplaint.ticket_number} has been raised in your jurisdiction.`,
+              savedComplaint.complaint_id
+            );
+          }
         }
       } catch (notifErr) {
         console.error('Failed to send notification for new complaint:', notifErr);
