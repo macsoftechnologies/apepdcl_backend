@@ -13,7 +13,7 @@ export class StaffDashboardService {
     private readonly jurisdictionRepo: Repository<StaffJurisdiction>,
   ) {}
 
-  async getDashboardStats(staffId: number, isSuperAdmin: boolean, roleLevel: number) {
+  async getDashboardStats(staffId: number, isSuperAdmin: boolean, roleLevel: number, targetLevel?: JurisdictionLevel, targetId?: number) {
     const query = this.complaintRepo
       .createQueryBuilder('complaint')
       .leftJoin('complaint.section', 'section')
@@ -29,18 +29,25 @@ export class StaffDashboardService {
         return { total_complaints: 0, pending_complaints: 0, assigned_complaints: 0, working_complaints: 0, resolved_complaints: 0 };
       }
 
-      query.andWhere(
-        new Brackets((qb) => {
-          jurisdictions.forEach((j, index) => {
-            const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
-            if (index === 0) {
-              qb.where(condition.sql, condition.params);
-            } else {
-              qb.orWhere(condition.sql, condition.params);
-            }
-          });
-        }),
-      );
+      if (targetLevel && targetId) {
+        // Apply targeted drill-down overriding the base jurisdiction
+        // (Assuming the frontend only requests valid child jurisdictions)
+        const targetCondition = this.getJurisdictionCondition(targetLevel, targetId);
+        query.andWhere(targetCondition.sql, targetCondition.params);
+      } else {
+        query.andWhere(
+          new Brackets((qb) => {
+            jurisdictions.forEach((j, index) => {
+              const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
+              if (index === 0) {
+                qb.where(condition.sql, condition.params);
+              } else {
+                qb.orWhere(condition.sql, condition.params);
+              }
+            });
+          }),
+        );
+      }
     } else if (roleLevel === 1) {
       // Lineman: query lineman_details to get lineman_id
       const lineman = await this.complaintRepo.manager.query(
@@ -79,7 +86,7 @@ export class StaffDashboardService {
     };
   }
 
-  async getLocationBreakdown(staffId: number, isSuperAdmin: boolean, roleLevel: number) {
+  async getLocationBreakdown(staffId: number, isSuperAdmin: boolean, roleLevel: number, targetLevel?: JurisdictionLevel, targetId?: number) {
     if (isSuperAdmin || roleLevel <= 2) {
       return { success: true, data: [] };
     }
@@ -93,15 +100,24 @@ export class StaffDashboardService {
     let groupBySelect = '';
     let groupByField = '';
     
-    if (roleLevel === 5) {
-      groupBySelect = 'division.division_name AS name, division.division_id AS id';
+    // Determine the effective level we are breaking down FROM
+    let effectiveLevel = roleLevel;
+    if (targetLevel === JurisdictionLevel.CIRCLE) effectiveLevel = 5;
+    if (targetLevel === JurisdictionLevel.DIVISION) effectiveLevel = 4;
+    if (targetLevel === JurisdictionLevel.SUBDIVISION) effectiveLevel = 3;
+    if (targetLevel === JurisdictionLevel.SECTION) effectiveLevel = 2;
+
+    if (effectiveLevel === 5) {
+      groupBySelect = 'division.division_name AS name, division.division_id AS id, \'Division\' as type';
       groupByField = 'division.division_id';
-    } else if (roleLevel === 4) {
-      groupBySelect = 'subdivision.subdivision_name AS name, subdivision.subdivision_id AS id';
+    } else if (effectiveLevel === 4) {
+      groupBySelect = 'subdivision.subdivision_name AS name, subdivision.subdivision_id AS id, \'SubDivision\' as type';
       groupByField = 'subdivision.subdivision_id';
-    } else if (roleLevel === 3) {
-      groupBySelect = 'section.section_name AS name, section.section_id AS id';
+    } else if (effectiveLevel === 3) {
+      groupBySelect = 'section.section_name AS name, section.section_id AS id, \'Section\' as type';
       groupByField = 'section.section_id';
+    } else {
+      return { success: true, data: [] }; // Cannot break down further than Section
     }
 
     const query = this.complaintRepo
@@ -116,14 +132,19 @@ export class StaffDashboardService {
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.WORKING}' THEN 1 ELSE 0 END) AS working_complaints`)
       .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RESOLVED}' THEN 1 ELSE 0 END) AS resolved_complaints`)
       .where(new Brackets((qb) => {
-        jurisdictions.forEach((j, index) => {
-          const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
-          if (index === 0) {
-            qb.where(condition.sql, condition.params);
-          } else {
-            qb.orWhere(condition.sql, condition.params);
-          }
-        });
+        if (targetLevel && targetId) {
+          const targetCondition = this.getJurisdictionCondition(targetLevel, targetId);
+          qb.where(targetCondition.sql, targetCondition.params);
+        } else {
+          jurisdictions.forEach((j, index) => {
+            const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
+            if (index === 0) {
+              qb.where(condition.sql, condition.params);
+            } else {
+              qb.orWhere(condition.sql, condition.params);
+            }
+          });
+        }
       }))
       .groupBy(groupByField)
       .orderBy('total_complaints', 'DESC');
@@ -135,6 +156,7 @@ export class StaffDashboardService {
       data: rawData.map(r => ({
         id: r.id,
         name: r.name,
+        type: r.type,
         total: parseInt(r.total_complaints || 0),
         pending: parseInt(r.pending_complaints || 0),
         assigned: parseInt(r.assigned_complaints || 0),
