@@ -31,7 +31,27 @@ export class StaffComplaintsController {
 
   @Patch(':id/status')
   @RequirePermissions('UPDATE_COMPLAINT_STATUS')
-  updateStatus(@Param('id', ParseIntPipe) id: number, @Body('status') status: any, @Request() req: any) {
-    return this.staffComplaintsService.updateStatus(req.user.staff_id, req.user.is_super_admin, req.user.role_level, id, status);
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number, 
+    @Body('status') status: any, 
+    @Body('resolution_notes') resolution_notes: string,
+    @Body('resolution_photo_url') resolution_photo_url: string,
+    @Body('resolution_document_url') resolution_document_url: string,
+    @Body('resolution_gps_lat') resolution_gps_lat: number,
+    @Body('resolution_gps_lng') resolution_gps_lng: number,
+    @Request() req: any
+  ) {
+    return this.staffComplaintsService.updateStatus(
+      req.user.staff_id, 
+      req.user.is_super_admin, 
+      req.user.role_level, 
+      id, 
+      status,
+      resolution_notes,
+      resolution_photo_url,
+      resolution_document_url,
+      resolution_gps_lat,
+      resolution_gps_lng
+    );
   }
 }

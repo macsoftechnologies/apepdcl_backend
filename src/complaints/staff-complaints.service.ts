@@ -186,13 +186,31 @@ export class StaffComplaintsService {
     return this.complaintRepo.save(complaint);
   }
 
-  async updateStatus(staffId: number, isSuperAdmin: boolean, roleLevel: number, complaintId: number, status: ComplaintStatus) {
+  async updateStatus(
+    staffId: number, 
+    isSuperAdmin: boolean, 
+    roleLevel: number, 
+    complaintId: number, 
+    status: ComplaintStatus,
+    resolution_notes?: string,
+    resolution_photo_url?: string,
+    resolution_document_url?: string,
+    resolution_gps_lat?: number,
+    resolution_gps_lng?: number
+  ) {
     const complaint = await this.findOneForStaff(staffId, isSuperAdmin, roleLevel, complaintId);
     
     complaint.status = status;
     
     if (status === ComplaintStatus.RESOLVED) {
       complaint.resolved_at = new Date();
+      if (resolution_notes) complaint.resolution_notes = resolution_notes;
+      if (resolution_photo_url) complaint.resolution_photo_url = resolution_photo_url;
+      if (resolution_document_url) complaint.resolution_document_url = resolution_document_url;
+      if (resolution_gps_lat) complaint.resolution_gps_lat = resolution_gps_lat;
+      if (resolution_gps_lng) complaint.resolution_gps_lng = resolution_gps_lng;
+    } else if (status === ComplaintStatus.WORKING) {
+      complaint.working_at = new Date();
     }
 
     return this.complaintRepo.save(complaint);

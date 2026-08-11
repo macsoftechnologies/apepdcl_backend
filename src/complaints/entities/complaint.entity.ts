@@ -109,6 +109,15 @@ export class Complaint {
   @Column({ nullable: true })
   resolution_photo_url: string;
 
+  @Column({ nullable: true })
+  resolution_document_url: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  resolution_gps_lat: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+  resolution_gps_lng: number;
+
   @ManyToOne(() => Consumer, (c) => c.complaints)
   @JoinColumn({ name: 'consumer_id' })
   consumer: Consumer;
