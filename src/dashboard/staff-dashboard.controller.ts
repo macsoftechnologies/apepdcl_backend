@@ -18,4 +18,13 @@ export class StaffDashboardController {
       req.user.role_level
     );
   }
+
+  @Get('location-breakdown')
+  getLocationBreakdown(@Request() req: any) {
+    return this.staffDashboardService.getLocationBreakdown(
+      req.user.staff_id, 
+      req.user.is_super_admin, 
+      req.user.role_level
+    );
+  }
 }

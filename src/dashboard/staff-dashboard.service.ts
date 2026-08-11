@@ -79,6 +79,67 @@ export class StaffDashboardService {
     };
   }
 
+  async getLocationBreakdown(staffId: number, isSuperAdmin: boolean, roleLevel: number) {
+    if (isSuperAdmin || roleLevel <= 2) {
+      return { success: true, data: [] };
+    }
+
+    const jurisdictions = await this.jurisdictionRepo.find({
+      where: { staff_id: staffId },
+    });
+
+    if (jurisdictions.length === 0) return { success: true, data: [] };
+    
+    let groupBySelect = '';
+    let groupByField = '';
+    
+    if (roleLevel === 5) {
+      groupBySelect = 'division.division_name AS name, division.division_id AS id';
+      groupByField = 'division.division_id';
+    } else if (roleLevel === 4) {
+      groupBySelect = 'subdivision.subdivision_name AS name, subdivision.subdivision_id AS id';
+      groupByField = 'subdivision.subdivision_id';
+    } else if (roleLevel === 3) {
+      groupBySelect = 'section.section_name AS name, section.section_id AS id';
+      groupByField = 'section.section_id';
+    }
+
+    const query = this.complaintRepo
+      .createQueryBuilder('complaint')
+      .leftJoin('complaint.section', 'section')
+      .leftJoin('section.subdivision', 'subdivision')
+      .leftJoin('subdivision.division', 'division')
+      .select(groupBySelect)
+      .addSelect('COUNT(complaint.complaint_id) AS total_complaints')
+      .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RAISED}' THEN 1 ELSE 0 END) AS pending_complaints`)
+      .addSelect(`SUM(CASE WHEN complaint.status = '${ComplaintStatus.RESOLVED}' THEN 1 ELSE 0 END) AS resolved_complaints`)
+      .where(new Brackets((qb) => {
+        jurisdictions.forEach((j, index) => {
+          const condition = this.getJurisdictionCondition(j.jurisdiction_level, j.jurisdiction_id);
+          if (index === 0) {
+            qb.where(condition.sql, condition.params);
+          } else {
+            qb.orWhere(condition.sql, condition.params);
+          }
+        });
+      }))
+      .groupBy(groupByField)
+      .orderBy('total_complaints', 'DESC');
+
+    const rawData = await query.getRawMany();
+    
+    return {
+      success: true,
+      data: rawData.map(r => ({
+        id: r.id,
+        name: r.name,
+        total: parseInt(r.total_complaints || 0),
+        pending: parseInt(r.pending_complaints || 0),
+        resolved: parseInt(r.resolved_complaints || 0)
+      }))
+    };
+  }
+
   private getJurisdictionCondition(level: JurisdictionLevel, id: number) {
     const paramName = `jur_${level}_${id}`;
     switch (level) {
