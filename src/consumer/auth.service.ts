@@ -50,7 +50,10 @@ export class AuthService {
     }
 
     // 2. Check if this is a Staff member
-    const staff = await this.staffRepo.findOne({ where: { phone_number: dto.mobile_number, is_active: true } });
+    const staff = await this.staffRepo.findOne({ 
+      where: { phone_number: dto.mobile_number, is_active: true },
+      relations: { designation: true, lineman_details: true }
+    });
     if (staff) {
       const allPerms = await this.permissionRepo.find();
       const perms = await this.staffPermRepo.find({ where: { staff_id: staff.staff_id } });
@@ -63,7 +66,23 @@ export class AuthService {
       
       // Keep array for JWT payload
       const permissions = perms.map(p => p.permission_key);
-      const token = this.jwtService.sign({ sub: staff.staff_id, is_staff: true, permissions });
+      
+      const payload: any = { 
+        sub: staff.staff_id, 
+        is_staff: true, 
+        permissions,
+        email: staff.email,
+        phone_number: staff.phone_number,
+        role_level: staff.designation?.role_level,
+        is_super_admin: staff.is_super_admin,
+      };
+      
+      if (staff.lineman_details) {
+        payload.lineman_id = staff.lineman_details.lineman_id;
+        payload.section_id = staff.lineman_details.section_id;
+      }
+      
+      const token = this.jwtService.sign(payload);
       return {
         success: true,
         message: 'Staff login successful',
