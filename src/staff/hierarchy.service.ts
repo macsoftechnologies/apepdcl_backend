@@ -54,11 +54,10 @@ export class HierarchyService {
 
     // Fetch all staff mapped to these areas
     const allStaffJuris = await this.jurisdictionRepo.find();
-    const allStaff = await this.staffRepo.find({ relations: ['designation'] });
-    const allLinemen = await this.linemanRepo.find({ relations: ['staff'] });
+    const allStaff = await this.staffRepo.find({ relations: { designation: true } });
+    const allLinemen = await this.linemanRepo.find({ relations: { staff: true } });
 
-    // Build the full tree in memory starting from the user's highest jurisdictions
-    const result = [];
+    const result: any[] = [];
 
     for (const juris of targetJurisdictions) {
       if (juris.jurisdiction_level === 'Circle') {
