@@ -35,7 +35,7 @@ import { StaffLinemenController } from './staff-linemen.controller';
     AuthModule,
   ],
   providers: [DesignationService, StaffService, JurisdictionService, StaffAuthService, PermissionsGuard, HierarchyService],
-  controllers: [StaffLinemenController, DesignationController, StaffController, JurisdictionController, StaffAuthController, HierarchyController],
+  controllers: [StaffLinemenController, DesignationController, HierarchyController, StaffController, JurisdictionController, StaffAuthController],
   exports: [StaffService, StaffAuthService, PermissionsGuard, TypeOrmModule],
 })
 export class StaffModule {}
