@@ -143,6 +143,8 @@ export class ConsumerComplaintsService {
       throw new NotFoundException(`Complaint not found`);
     }
 
+    require('fs').writeFileSync('c:/Shanmukha/apepdcl/backend/consumer_complaint_debug.json', JSON.stringify(complaint, null, 2));
+
     return { success: true, message: 'Complaint details fetched', data: complaint };
   }
 }
