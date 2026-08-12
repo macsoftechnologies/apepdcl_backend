@@ -18,7 +18,7 @@ export class ConsumerComplaintsService {
     @InjectRepository(StaffJurisdiction)
     private readonly staffJurisdictionRepo: Repository<StaffJurisdiction>,
     private readonly notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   async create(consumerId: number, dto: CreateConsumerComplaintDto) {
     const consumer = await this.consumerRepo.findOne({ where: { consumer_id: consumerId } });
@@ -31,7 +31,7 @@ export class ConsumerComplaintsService {
     while (!isUnique) {
       const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString();
       ticket_number = `APD-${new Date().getFullYear()}-${randomSuffix}`;
-      const existing = await this.complaintRepo.findOne({ where: { ticket_number }});
+      const existing = await this.complaintRepo.findOne({ where: { ticket_number } });
       if (!existing) {
         isUnique = true;
       }
@@ -46,7 +46,7 @@ export class ConsumerComplaintsService {
 
     try {
       const savedComplaint = await this.complaintRepo.save(complaint);
-      
+
       // Fetch full hierarchy to notify AE, ADE, DE
       try {
         const fullComplaint = await this.complaintRepo.findOne({
@@ -70,15 +70,15 @@ export class ConsumerComplaintsService {
             .leftJoin('staff.designation', 'designation')
             .where('designation.role_level > 1') // Exclude linemen
             .andWhere(new Brackets(qb => {
-              qb.where('jurisdiction.jurisdiction_level = :sectionLevel AND jurisdiction.jurisdiction_id = :sectionId', { 
-                sectionLevel: JurisdictionLevel.SECTION, sectionId: sectionId 
+              qb.where('jurisdiction.jurisdiction_level = :sectionLevel AND jurisdiction.jurisdiction_id = :sectionId', {
+                sectionLevel: JurisdictionLevel.SECTION, sectionId: sectionId
               })
-              .orWhere('jurisdiction.jurisdiction_level = :subdivLevel AND jurisdiction.jurisdiction_id = :subdivId', { 
-                subdivLevel: JurisdictionLevel.SUBDIVISION, subdivId: subdivId 
-              })
-              .orWhere('jurisdiction.jurisdiction_level = :divLevel AND jurisdiction.jurisdiction_id = :divId', { 
-                divLevel: JurisdictionLevel.DIVISION, divId: divId 
-              });
+                .orWhere('jurisdiction.jurisdiction_level = :subdivLevel AND jurisdiction.jurisdiction_id = :subdivId', {
+                  subdivLevel: JurisdictionLevel.SUBDIVISION, subdivId: subdivId
+                })
+                .orWhere('jurisdiction.jurisdiction_level = :divLevel AND jurisdiction.jurisdiction_id = :divId', {
+                  divLevel: JurisdictionLevel.DIVISION, divId: divId
+                });
             }))
             .getMany();
 
@@ -113,12 +113,12 @@ export class ConsumerComplaintsService {
       skip,
       take: limit,
     });
-    
+
     const totalPages = Math.ceil(total / limit);
-    
-    return { 
-      success: true, 
-      message: 'Complaints fetched', 
+
+    return {
+      success: true,
+      message: 'Complaints fetched',
       data: items,
       total,
       page,
