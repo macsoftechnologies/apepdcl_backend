@@ -100,7 +100,7 @@ export class ConsumerComplaintsService {
 
       return savedComplaint;
     } catch (error: any) {
-      require('fs').writeFileSync('c:/Shanmukha/apepdcl/backend/db_error.log', String(error) + '\n' + (error.stack || ''));
+      console.error('Failed to create consumer complaint:', error);
       throw error;
     }
   }
@@ -142,8 +142,6 @@ export class ConsumerComplaintsService {
     if (!complaint) {
       throw new NotFoundException(`Complaint not found`);
     }
-
-    require('fs').writeFileSync('c:/Shanmukha/apepdcl/backend/consumer_complaint_debug.json', JSON.stringify(complaint, null, 2));
 
     return { success: true, message: 'Complaint details fetched', data: complaint };
   }
